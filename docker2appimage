@@ -30,12 +30,12 @@ image=$1
 tarball=$image.tar
 appdir=$image.AppDir
 
-container_id=$(docker container create $image)
-docker export $container_id > $tarball
-mkdir -p $appdir
-tar -xf $tarball -C $appdir
+container_id=$(docker container create "$image")
+docker export "$container_id" > "$tarball"
+mkdir -p "$appdir"
+tar -xf "$tarball" -C "$appdir"
 
-cat << 'EOF' > $appdir/AppRun
+cat << 'EOF' > "$appdir"/AppRun
 #!/bin/sh
 
 SELF=$(readlink -f "$0")
@@ -48,10 +48,10 @@ EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2 | cu
 exec "${EXEC}" "$@"
 EOF
 
-exec=$(docker image inspect --format='{{.Config.Cmd}}' $image | sed -E 's/\[(.*)\]/\1/gm;t;d')
+exec=$(docker image inspect --format='{{.Config.Cmd}}' "$image" | sed -E 's/\[(.*)\]/\1/gm;t;d')
 case $exec in
     /*)
-        normexec=$(echo $exec | sed 's/^\///')
+        normexec=$(echo "$exec" | sed 's/^\///')
         ;;
     *)
         echo "Unsupported case $exec"
@@ -59,10 +59,10 @@ case $exec in
         ;;
 esac
 
-chmod +x $appdir/AppRun
+chmod +x "$appdir"/"AppRun"
 
 # TODO: Find the right executable
-cat << EOF > $appdir/$image.desktop
+cat << EOF > "$appdir"/"$image".desktop
 [Desktop Entry]
 Name=$image
 Exec=$normexec
@@ -71,4 +71,5 @@ Type=Application
 Categories=Utility;
 EOF
 
-convert -size 256x256 xc:white $appdir/$image.png
+convert -size 256x256 xc:white "$appdir"/"$image".png
+appimagetool-x86_64.AppImage "$appdir"
