@@ -15,3 +15,17 @@ exports it, and converts it to the standardized AppImageDir format. Finally
 the AppImageDir is used to build the appimage. The executable launched is the 
 default `Cmd` specified in the docker image.
 
+## Usage
+
+Example of basic usage
+```bash
+$ docker2appimage hello-world
+$ ls
+... hello-world-x86_64.AppImage
+$ ./hello-world-x86_64.AppImage
+Hello from Docker!
+...
+```
+
+
+
