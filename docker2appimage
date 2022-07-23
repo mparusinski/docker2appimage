@@ -26,6 +26,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+version=0.0.0 # Still ongoing development
+application="docker2appimage"
+
+usage () { printf "%s" "\
+Usage: $application [OPTION] image
+
+$application is a CLI tool to convert docker images to AppImage format
+
+Options:
+    -h, --help           Print this text and exit
+        --version        Show docker2appimage version
+    -v, --verbose        Verbose mode (TODO)
+
+DEVELOPER:
+        --xtrace         Use xtrace in AppRun script
+
+Report bugs to https://github.com/mparusinski/docker2appimage/issues
+"
+exit 2
+}
+
+version_then_exit() { printf "%s" "\
+$application $version
+"
+exit 1
+}
+
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hv --long help,version,verbose,xtrace -- $@)
+VALID_ARGUMENTS=$?
+if [ "$VALID_ARGUMENTS" != "0" ]; then
+    usage
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do 
+    case $1 in
+        -h | --help)    usage;                  shift       ;;
+        --version)      version_then_exit;      shift       ;;
+        -v | --verbose) VERBOSE=1;              shift       ;;
+        --xtrace)       XTRACE=1;               shift       ;;
+        --)                                     shift;  break;;
+        *) echo "Unexpected option: $1"
+           usage ;;
+   esac
+done
+
+if [ "$#" -lt 1 ]; then
+    echo "$application: missing parameter image"
+    usage
+fi
+
 image=$1
 tarball=$image.tar
 appdir=$image.AppDir
@@ -53,11 +105,16 @@ case $exec in
     /*)
         normexec=$(echo "$exec" | sed 's/^\///')
         ;;
+    sh)
+        normexec="$exec"
+        ;;
     *)
         echo "Unsupported case $exec"
         exit 1
         ;;
 esac
+
+echo $normexec
 
 chmod +x "$appdir"/"AppRun"
 
