@@ -40,6 +40,7 @@ Options:
     -v, --verbose        Verbose mode (TODO)
 
 DEVELOPER:
+        --noclean        Do not clean Appimage artifacts
         --xtrace         Use xtrace in AppRun script
 
 Report bugs to https://github.com/mparusinski/docker2appimage/issues
@@ -53,7 +54,7 @@ $application $version
 exit 1
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $application -o hv --long help,version,verbose,xtrace -- $@)
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hv --long help,version,verbose,noclean,xtrace -- $@)
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
     usage
@@ -66,6 +67,7 @@ do
         -h | --help)    usage;                  shift       ;;
         --version)      version_then_exit;      shift       ;;
         -v | --verbose) VERBOSE=1;              shift       ;;
+        --noclean)      NOCLEAN=1;              shift       ;;
         --xtrace)       XTRACE=1;               shift       ;;
         --)                                     shift;  break;;
         *) echo "Unexpected option: $1"
@@ -151,3 +153,9 @@ EOF
 
 convert -size 256x256 xc:white "$appdir"/"$image".png
 appimagetool-x86_64.AppImage "$appdir"
+
+# Cleaning build artifcats, unless requested to be kept
+if [ -z  ${NOCLEAN+x} ]; then
+    rm -rf "$appdir"
+    rm "$tarball"
+fi
