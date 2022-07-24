@@ -38,6 +38,7 @@ Options:
     -h, --help           Print this text and exit
         --version        Show docker2appimage version
     -v, --verbose        Verbose mode (TODO)
+    -x, --command=CMD    Use custom command from the docker image
 
 DEVELOPER:
         --noclean        Do not clean Appimage artifacts
@@ -54,7 +55,7 @@ $application $version
 exit 1
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $application -o hv --long help,version,verbose,noclean,xtrace -- $@)
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hvx: --long help,version,verbose,command:,noclean,xtrace -- $@)
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
     usage
@@ -67,6 +68,7 @@ do
         -h | --help)    usage;                  shift       ;;
         --version)      version_then_exit;      shift       ;;
         -v | --verbose) VERBOSE=1;              shift       ;;
+        -x | --command) COMMAND=$2;             shift 2     ;;
         --noclean)      NOCLEAN=1;              shift       ;;
         --xtrace)       XTRACE=1;               shift       ;;
         --)                                     shift;  break;;
@@ -112,6 +114,28 @@ EOF
     fi
 }
 
+fetch_exec () {
+    if [ -z ${COMMAND+x} ]; then
+        exec=$(docker image inspect --format='{{.Config.Cmd}}' "$image" | sed -E 's/\[(.*)\]/\1/gm;t;d')
+        case $exec in
+            /*)
+                normexec=$(echo "$exec" | sed 's/^\///')
+                ;;
+            sh)
+                echo "Shell is not supported"
+                exit 2
+                ;;
+            *)
+                echo "Unsupported case $exec"
+                exit 1
+                ;;
+        esac
+    else
+        normexec=$COMMAND
+    fi
+    echo "$normexec"
+}
+
 image=$1
 tarball=$image.tar
 appdir=$image.AppDir
@@ -123,25 +147,10 @@ tar -xf "$tarball" -C "$appdir"
 
 write_AppRun
 
-exec=$(docker image inspect --format='{{.Config.Cmd}}' "$image" | sed -E 's/\[(.*)\]/\1/gm;t;d')
-case $exec in
-    /*)
-        normexec=$(echo "$exec" | sed 's/^\///')
-        ;;
-    sh)
-        normexec="$exec"
-        ;;
-    *)
-        echo "Unsupported case $exec"
-        exit 1
-        ;;
-esac
-
-echo $normexec
+normexec=$(fetch_exec)
 
 chmod +x "$appdir"/"AppRun"
 
-# TODO: Find the right executable
 cat << EOF > "$appdir"/"$image".desktop
 [Desktop Entry]
 Name=$image
