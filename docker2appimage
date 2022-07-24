@@ -78,16 +78,9 @@ if [ "$#" -lt 1 ]; then
     usage
 fi
 
-image=$1
-tarball=$image.tar
-appdir=$image.AppDir
-
-container_id=$(docker container create "$image")
-docker export "$container_id" > "$tarball"
-mkdir -p "$appdir"
-tar -xf "$tarball" -C "$appdir"
-
-cat << 'EOF' > "$appdir"/AppRun
+write_AppRun () {
+    if [ -z ${XTRACE+x} ]; then
+        cat << 'EOF' > "$appdir"/AppRun
 #!/bin/sh
 
 SELF=$(readlink -f "$0")
@@ -99,6 +92,34 @@ export XDG_DATA_DIRS="${HERE}/usr/share/${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2 | cut -d " " -f 1)
 exec "${EXEC}" "$@"
 EOF
+    else
+        cat << 'EOF' > "$appdir"/AppRun
+#!/bin/sh
+
+set -x
+SELF=$(readlink -f "$0")
+HERE=${SELF%/}
+HERE=$(dirname ${HERE})
+export PATH="${HERE}:${HERE}/usr/bin/:${HERE}/usr/sbin/:${HERE}/usr/games/:${HERE}/bin/:${HERE}/sbin/${PATH:+:$PATH}"
+export LD_LIBRARY_PATH="${HERE}/usr/lib/:${HERE}/usr/lib/i386-linux-gnu/:${HERE}/usr/lib/x86_64-linux-gnu/:${HERE}/usr/lib32/:${HERE}/usr/lib64/:${HERE}/lib/:${HERE}/lib/i386-linux-gnu/:${HERE}/lib/x86_64-linux-gnu/:${HERE}/lib32/:${HERE}/lib64/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XDG_DATA_DIRS="${HERE}/usr/share/${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2 | cut -d " " -f 1)
+exec "${EXEC}" "$@"
+set +x
+EOF
+    fi
+}
+
+image=$1
+tarball=$image.tar
+appdir=$image.AppDir
+
+container_id=$(docker container create "$image")
+docker export "$container_id" > "$tarball"
+mkdir -p "$appdir"
+tar -xf "$tarball" -C "$appdir"
+
+write_AppRun
 
 exec=$(docker image inspect --format='{{.Config.Cmd}}' "$image" | sed -E 's/\[(.*)\]/\1/gm;t;d')
 case $exec in
