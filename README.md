@@ -27,5 +27,15 @@ Hello from Docker!
 ...
 ```
 
+To specify a custom entry command use the `-x` or `--command`. Furthermore one can give
+a distinct name to the AppImage using `-n` or --`name` command. For instance`
+```bash
+$ docker2appimage -x ls --name alpine-ls alpine
+$ ls
+... alpine-ls-x86_64.AppImage
+$ ./alpine-ls-x86_64.AppImage
+... alpine-ls-x86_64.AppImage ..
+```
+
 
 
