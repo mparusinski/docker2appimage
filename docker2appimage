@@ -39,6 +39,7 @@ Options:
         --version        Show docker2appimage version
     -v, --verbose        Verbose mode (TODO)
     -x, --command=CMD    Use custom command from the docker image
+    -n, --name=NAME      Use custom name for AppImage
 
 DEVELOPER:
         --noclean        Do not clean Appimage artifacts
@@ -55,7 +56,7 @@ $application $version
 exit 1
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $application -o hvx: --long help,version,verbose,command:,noclean,xtrace -- $@)
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hvx:n: --long help,version,verbose,command:,name:,noclean,xtrace -- $@)
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
     usage
@@ -69,6 +70,7 @@ do
         --version)      version_then_exit;      shift       ;;
         -v | --verbose) VERBOSE=1;              shift       ;;
         -x | --command) COMMAND=$2;             shift 2     ;;
+        -n | --name)    NAME=$2;                shift 2     ;;
         --noclean)      NOCLEAN=1;              shift       ;;
         --xtrace)       XTRACE=1;               shift       ;;
         --)                                     shift;  break;;
@@ -145,6 +147,13 @@ docker export "$container_id" > "$tarball"
 mkdir -p "$appdir"
 tar -xf "$tarball" -C "$appdir"
 
+if [ -n "$NAME" ]; then
+    mv "$appdir" "$NAME.AppDir"
+    appdir=$NAME.AppDir
+else
+    NAME=$image
+fi
+
 write_AppRun
 
 normexec=$(fetch_exec)
@@ -153,18 +162,19 @@ chmod +x "$appdir"/"AppRun"
 
 cat << EOF > "$appdir"/"$image".desktop
 [Desktop Entry]
-Name=$image
+Name=$NAME
 Exec=$normexec
-Icon=$image
+Icon=$NAME
 Type=Application
 Categories=Utility;
 EOF
 
-convert -size 256x256 xc:white "$appdir"/"$image".png
+convert -size 256x256 xc:white "$appdir"/"$NAME".png
+
 appimagetool-x86_64.AppImage "$appdir"
 
 # Cleaning build artifcats, unless requested to be kept
-if [ -z  ${NOCLEAN+x} ]; then
+if [ -z ${NOCLEAN+x} ]; then
     rm -rf "$appdir"
     rm "$tarball"
 fi
