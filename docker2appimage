@@ -89,8 +89,8 @@ fetch_exec () {
                 normexec=$(echo "$exec" | sed 's/^\///')
                 ;;
             sh)
-                echo "Shell is not supported"
-                exit 2
+                echo "ERROR: Docker image/container with shell script is not supported"
+                exit 1
                 ;;
             *)
                 echo "Unsupported case $exec"
@@ -167,8 +167,12 @@ fi
 check_requirements
 
 docker_object=$1
-tarball=$docker_object.tar
-appdir=$docker_object.AppDir
+# We need to handle images with / in the name
+# hence we modify these
+normed_docker_object=${docker_object/\//_}
+
+tarball=$normed_docker_object.tar
+appdir=$normed_docker_object.AppDir
 
 if [ -z ${IMAGE+x} ]; 
 then
@@ -192,7 +196,7 @@ if [ -n "$NAME" ]; then
     mv "$appdir" "$NAME.AppDir"
     appdir=$NAME.AppDir
 else
-    NAME=$docker_object
+    NAME=$normed_docker_object
 fi
 
 write_AppRun
@@ -201,7 +205,7 @@ normexec=$(fetch_exec container $container_id)
 
 chmod +x "$appdir"/"AppRun"
 
-cat << EOF > "$appdir"/"$docker_object".desktop
+cat << EOF > "$appdir"/"$normed_docker_object".desktop
 [Desktop Entry]
 Name=$NAME
 Exec=$normexec
