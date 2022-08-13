@@ -8,21 +8,35 @@
 </p>
 
 The command-line tool `docker2appimage` written in `bash 5.1+`. It converts
-a docker image into a appimage.
+a docker container (or alternatively a docker image) into a appimage.
 
-To achieve this, `docker2apimage` build from a selected image a container, 
-exports it, and converts it to the standardized AppImageDir format. Finally
+To achieve this, `docker2apimage`, exports a container as a tarball, 
+and then converts it to the standardized AppImageDir format. Finally
 the AppImageDir is used to build the appimage. The executable launched is the 
 default `Cmd` specified in the docker image.
 
 ## Usage
 
-Example of basic usage
+Example of basic usage from an image
 ```bash
-$ docker2appimage hello-world
+$ docker2appimage -i hello-world
+... 
 $ ls
 ... hello-world-x86_64.AppImage
 $ ./hello-world-x86_64.AppImage
+Hello from Docker!
+...
+```
+
+or from an existing container
+```bash
+$ docker ps -a
+...
+86a6c9d4346a   hello-world    "/hello"   2 months ago  Created  romantic_diffie
+...
+$ docker2appimage romantic_diffie
+...
+$ ./romantic_diffie-x86_64.AppImage
 Hello from Docker!
 ...
 ```

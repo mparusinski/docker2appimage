@@ -52,7 +52,7 @@ check_requirements() {
 }
 
 usage () { printf "%s" "\
-Usage: $application [OPTION] image
+Usage: $application [OPTION] container
 
 $application is a CLI tool to convert docker images to AppImage format
 
@@ -60,6 +60,7 @@ Options:
     -h, --help           Print this text and exit
         --version        Show docker2appimage version
     -v, --verbose        Verbose mode (TODO)
+    -i, --from-image     Use an image instead of a container
     -x, --command=CMD    Use custom command from the docker image
     -n, --name=NAME      Use custom name for AppImage
 
@@ -78,35 +79,29 @@ $application $version
 exit 1
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $application -o hvx:n: --long help,version,verbose,command:,name:,noclean,xtrace -- $@)
-VALID_ARGUMENTS=$?
-if [ "$VALID_ARGUMENTS" != "0" ]; then
-    usage
-fi
-
-eval set -- "$PARSED_ARGUMENTS"
-while :
-do 
-    case $1 in
-        -h | --help)    usage;                  shift       ;;
-        --version)      version_then_exit;      shift       ;;
-        -v | --verbose) VERBOSE=1;              shift       ;;
-        -x | --command) COMMAND=$2;             shift 2     ;;
-        -n | --name)    NAME=$2;                shift 2     ;;
-        --noclean)      NOCLEAN=1;              shift       ;;
-        --xtrace)       XTRACE=1;               shift       ;;
-        --)                                     shift;  break;;
-        *) echo "Unexpected option: $1"
-           usage ;;
-   esac
-done
-
-if [ "$#" -lt 1 ]; then
-    echo "$application: missing parameter image"
-    usage
-fi
-
-check_requirements
+fetch_exec () {
+    object_type=$1  # Either image or container
+    object=$2
+    if [ -z ${COMMAND+x} ]; then
+        exec=$(docker $object_type inspect --format='{{.Config.Cmd}}' "$object" | sed -E 's/\[(.*)\]/\1/gm;t;d')
+        case $exec in
+            /*)
+                normexec=$(echo "$exec" | sed 's/^\///')
+                ;;
+            sh)
+                echo "Shell is not supported"
+                exit 2
+                ;;
+            *)
+                echo "Unsupported case $exec"
+                exit 1
+                ;;
+        esac
+    else
+        normexec=$COMMAND
+    fi
+    echo "$normexec"
+}
 
 write_AppRun () {
     if [ -z ${XTRACE+x} ]; then
@@ -140,34 +135,56 @@ EOF
     fi
 }
 
-fetch_exec () {
-    if [ -z ${COMMAND+x} ]; then
-        exec=$(docker image inspect --format='{{.Config.Cmd}}' "$image" | sed -E 's/\[(.*)\]/\1/gm;t;d')
-        case $exec in
-            /*)
-                normexec=$(echo "$exec" | sed 's/^\///')
-                ;;
-            sh)
-                echo "Shell is not supported"
-                exit 2
-                ;;
-            *)
-                echo "Unsupported case $exec"
-                exit 1
-                ;;
-        esac
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hvix:n: --long help,version,verbose,from-image,command:,name:,noclean,xtrace -- $@)
+VALID_ARGUMENTS=$?
+if [ "$VALID_ARGUMENTS" != "0" ]; then
+    usage
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do 
+    case $1 in
+        -h | --help)       usage;                  shift       ;;
+        --version)         version_then_exit;      shift       ;;
+        -v | --verbose)    VERBOSE=1;              shift       ;;
+        -i | --from-image) IMAGE=1;                shift       ;;
+        -x | --command)    COMMAND=$2;             shift 2     ;;
+        -n | --name)       NAME=$2;                shift 2     ;;
+        --noclean)         NOCLEAN=1;              shift       ;;
+        --xtrace)          XTRACE=1;               shift       ;;
+        --)                                     shift;  break;;
+        *) echo "Unexpected option: $1"
+           usage ;;
+   esac
+done
+
+if [ "$#" -lt 1 ]; then
+    echo "$application: missing parameter image"
+    usage
+fi
+
+check_requirements
+
+docker_object=$1
+tarball=$docker_object.tar
+appdir=$docker_object.AppDir
+
+if [ -z ${IMAGE+x} ]; 
+then
+    container_id=$docker_object
+    if [ $( docker ps -a --format "{{.Names}}" | grep "$container_id" | wc -l) -gt 0 ];
+    then
+        docker export "$docker_object" > "$tarball"
     else
-        normexec=$COMMAND
+        echo "ERROR: Docker container $container_id does not exist"
+        exit 1
     fi
-    echo "$normexec"
-}
+else
+    container_id=$(docker container create "$docker_object")
+    docker export "$container_id" > "$tarball"
+fi
 
-image=$1
-tarball=$image.tar
-appdir=$image.AppDir
-
-container_id=$(docker container create "$image")
-docker export "$container_id" > "$tarball"
 mkdir -p "$appdir"
 tar -xf "$tarball" -C "$appdir"
 
@@ -175,16 +192,16 @@ if [ -n "$NAME" ]; then
     mv "$appdir" "$NAME.AppDir"
     appdir=$NAME.AppDir
 else
-    NAME=$image
+    NAME=$docker_object
 fi
 
 write_AppRun
 
-normexec=$(fetch_exec)
+normexec=$(fetch_exec container $container_id)
 
 chmod +x "$appdir"/"AppRun"
 
-cat << EOF > "$appdir"/"$image".desktop
+cat << EOF > "$appdir"/"$docker_object".desktop
 [Desktop Entry]
 Name=$NAME
 Exec=$normexec
