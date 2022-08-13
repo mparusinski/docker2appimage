@@ -2,7 +2,7 @@
 
 Test 1
 ```bash
-./docker2appimage -i hello-world`
+./docker2appimage -i hello-worl`
 ```
 
 Test 2
@@ -13,7 +13,7 @@ docker run --name hello-world_mini hello-world
 
 Test 3
 ```bash
-./docker2appimage -x ls --name alpine-ls -i alpine`
+./docker2appimage -x ls --name alpine-ls -i alpine
 ```
 
 Test 4

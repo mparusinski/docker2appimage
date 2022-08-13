@@ -28,6 +28,7 @@
 
 version=0.0.0 # Still ongoing development
 application="docker2appimage"
+normexec=""
 
 check_imagemagick () {
     if ! command -v convert &> /dev/null
@@ -100,7 +101,6 @@ fetch_exec () {
     else
         normexec=$COMMAND
     fi
-    echo "$normexec"
 }
 
 write_AppRun () {
@@ -176,6 +176,7 @@ appdir=$normed_docker_object.AppDir
 
 if [ -z ${IMAGE+x} ]; 
 then
+    fetch_exec container $docker_object
     container_id=$docker_object
     if [ $( docker ps -a --format "{{.Names}}" | grep "$container_id" | wc -l) -gt 0 ];
     then
@@ -185,6 +186,7 @@ then
         exit 1
     fi
 else
+    fetch_exec image $docker_object
     container_id=$(docker container create "$docker_object")
     docker export "$container_id" > "$tarball"
 fi
@@ -200,8 +202,6 @@ else
 fi
 
 write_AppRun
-
-normexec=$(fetch_exec container $container_id)
 
 chmod +x "$appdir"/"AppRun"
 
