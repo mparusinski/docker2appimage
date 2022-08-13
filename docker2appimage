@@ -29,6 +29,28 @@
 version=0.0.0 # Still ongoing development
 application="docker2appimage"
 
+check_imagemagick () {
+    if ! command -v convert &> /dev/null
+    then
+        echo "ERROR: convert (imagemagick) is required by $application"
+        exit 1;
+    fi
+}
+
+check_appimagetool () {
+    if ! command -v appimagetool-x86_64.AppImage &> /dev/null
+    then
+        echo "ERROR: appimagetool is required by $application"
+        echo "ERROR: appimagetool can be downloaded from https://appimage.github.io/appimagetool/"
+        exit 1;
+    fi
+}
+
+check_requirements() {
+    check_imagemagick
+    check_appimagetool
+}
+
 usage () { printf "%s" "\
 Usage: $application [OPTION] image
 
@@ -83,6 +105,8 @@ if [ "$#" -lt 1 ]; then
     echo "$application: missing parameter image"
     usage
 fi
+
+check_requirements
 
 write_AppRun () {
     if [ -z ${XTRACE+x} ]; then
