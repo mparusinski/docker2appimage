@@ -186,6 +186,7 @@ then
         exit 1
     fi
 else
+    docker pull --quiet "$docker_object"
     fetch_exec image "$docker_object"
     container_id=$(docker container create "$docker_object")
     docker export "$container_id" > "$tarball"
