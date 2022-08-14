@@ -19,6 +19,7 @@ jobs:
       - name: Check simplest 
         run: | 
           wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
           mkdir -p ./tmp/bin && mv appimagetool-x86_64.AppImage ./tmp/bin
           export PATH=`pwd`/tmp/bin:$PATH
           ./docker2appimage -i hello-world
