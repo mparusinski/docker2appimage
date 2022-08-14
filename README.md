@@ -4,7 +4,7 @@
 <p align="center">
 <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 <a href="https://github.com/mparusinski/docker2appimage/actions/workflows/main.yml"><img src="https://github.com/mparusinski/docker2appimage/actions/workflows/main.yml/badge.svg"></a>
-<a href="https://github.com/mparusinski/docker2appimage/releases"><img src="https://img.shields.io/github/release/mparusinski/docker2appimage.svg"></a>
+<a href="https://github.com/mparusinski/docker2appimage/releases"><img src="https://img.shields.io/github/v/release/mparusinski/docker2appimage.svg"></a>
 <a href="https://repology.org/metapackage/docker2appimage"><img src="https://repology.org/badge/tiny-repos/docker2appimage.svg" alt="Packagin status"></a>
 </p>
 
