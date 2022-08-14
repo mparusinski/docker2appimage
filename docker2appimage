@@ -26,7 +26,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-version=0.1.0 # Still ongoing development
+version=0.1 
 application="docker2appimage"
 normexec=""
 
