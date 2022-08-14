@@ -60,7 +60,6 @@ $application is a CLI tool to convert docker images to AppImage format
 Options:
     -h, --help           Print this text and exit
         --version        Show docker2appimage version
-    -v, --verbose        Verbose mode (TODO)
     -i, --from-image     Use an image instead of a container
     -x, --command=CMD    Use custom command from the docker image
     -n, --name=NAME      Use custom name for AppImage
@@ -84,7 +83,7 @@ fetch_exec () {
     object_type=$1  # Either image or container
     object=$2
     if [ -z ${COMMAND+x} ]; then
-        exec=$(docker $object_type inspect --format='{{.Config.Cmd}}' "$object" | sed -E 's/\[(.*)\]/\1/gm;t;d')
+        exec=$(docker "$object_type" inspect --format='{{.Config.Cmd}}' "$object" | sed -E 's/\[(.*)\]/\1/gm;t;d')
         case $exec in
             /*)
                 normexec=$(echo "$exec" | sed 's/^\///')
@@ -135,7 +134,9 @@ EOF
     fi
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $application -o hvix:n: --long help,version,verbose,from-image,command:,name:,noclean,xtrace -- $@)
+# shellcheck disable=SC2068
+PARSED_ARGUMENTS=$(getopt -a -n $application -o hix:n: --long help,version,from-image,command:,name:,noclean,xtrace -- $@)
+
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
     usage
@@ -147,7 +148,6 @@ do
     case $1 in
         -h | --help)       usage;                  shift       ;;
         --version)         version_then_exit;      shift       ;;
-        -v | --verbose)    VERBOSE=1;              shift       ;;
         -i | --from-image) IMAGE=1;                shift       ;;
         -x | --command)    COMMAND=$2;             shift 2     ;;
         -n | --name)       NAME=$2;                shift 2     ;;
@@ -176,9 +176,9 @@ appdir=$normed_docker_object.AppDir
 
 if [ -z ${IMAGE+x} ]; 
 then
-    fetch_exec container $docker_object
+    fetch_exec container "$docker_object"
     container_id=$docker_object
-    if [ $( docker ps -a --format "{{.Names}}" | grep "$container_id" | wc -l) -gt 0 ];
+    if [ "$( docker ps -a --format "{{.Names}}" | grep -c "$container_id")" -gt 0 ];
     then
         docker export "$docker_object" > "$tarball"
     else
@@ -186,7 +186,7 @@ then
         exit 1
     fi
 else
-    fetch_exec image $docker_object
+    fetch_exec image "$docker_object"
     container_id=$(docker container create "$docker_object")
     docker export "$container_id" > "$tarball"
 fi
