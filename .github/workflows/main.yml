@@ -23,3 +23,6 @@ jobs:
           mkdir -p ./tmp/bin && mv appimagetool-x86_64.AppImage ./tmp/bin
           export PATH=`pwd`/tmp/bin:$PATH
           ./docker2appimage -i hello-world
+          ls -l hello-world-x86_64.AppImage
+          chmod +x ./hello-world-x86_64.AppImage
+          ./hello-world-x86_64.AppImage
