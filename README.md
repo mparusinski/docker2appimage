@@ -8,49 +8,34 @@
 <a href="https://repology.org/metapackage/docker2appimage"><img src="https://repology.org/badge/tiny-repos/docker2appimage.svg" alt="Packagin status"></a>
 </p>
 
-The command-line tool `docker2appimage` written in `bash 5.1+`. It converts
-a docker container (or alternatively a docker image) into a appimage.
+<div align="center">
+docker2appimage is a tool to convert docker containers (and images) to appimages
 
-To achieve this, `docker2apimage`, exports a container as a tarball, 
-and then converts it to the standardized AppImageDir format. Finally
-the AppImageDir is used to build the appimage. The executable launched is the 
-default `Cmd` specified in the docker image.
+[Getting started](#getting-started) •
+[Installation](#Installation) •
 
-## Usage
+</div>
 
-Example of basic usage from an image
-```bash
-$ docker2appimage -i hello-world
-... 
-$ ls
-... hello-world-x86_64.AppImage
-$ ./hello-world-x86_64.AppImage
-Hello from Docker!
-...
+## Getting started
+
+```sh
+# Create an AppImage from Docker's hello-world image
+docker2appimage -i hello-world
+# Create an AppImage called alpine-ls from alpine's Docker image which calls ls 
+docker2appimage -x ls --name alpine-ls -i alpine
+# Create an AppImage from Docker container named relaxed_beaver
+docker2appimage relaxed_beaver
 ```
 
-or from an existing container
-```bash
-$ docker ps -a
-...
-86a6c9d4346a   hello-world    "/hello"   2 months ago  Created  romantic_diffie
-...
-$ docker2appimage romantic_diffie
-...
-$ ./romantic_diffie-x86_64.AppImage
-Hello from Docker!
-...
-```
+## Installation
 
-To specify a custom entry command use the `-x` or `--command`. Furthermore one can give
-a distinct name to the AppImage using `-n` or --`name` command. For instance`
-```bash
-$ docker2appimage -x ls --name alpine-ls alpine
-$ ls
-... alpine-ls-x86_64.AppImage
-$ ./alpine-ls-x86_64.AppImage
-... alpine-ls-x86_64.AppImage ..
-```
+### Universal Install
 
+1. Download the latest release
+    * https://github.com/mparusinski/docker2appimage/releases/latest
+2. Run make install inside the script directory to install the script
+    * You may have to run this as root
 
+### OS/Distro Packages
 
+Section coming soon
