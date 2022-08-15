@@ -12,7 +12,7 @@
 docker2appimage is a tool to convert docker containers (and images) to appimages
 
 [Getting started](#getting-started) •
-[Installation](#Installation) •
+[Installation](#Installation)
 
 </div>
 
