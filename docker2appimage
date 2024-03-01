@@ -167,9 +167,9 @@ fi
 check_requirements
 
 docker_object=$1
-# We need to handle images with / in the name
-# hence we modify these
-normed_docker_object=${docker_object/\//_}
+# We need to handle images with / or : in the name
+# hence we modify these.
+normed_docker_object=${docker_object//[\/:]/_}
 
 tarball=$normed_docker_object.tar
 appdir=$normed_docker_object.AppDir
