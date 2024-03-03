@@ -87,7 +87,7 @@ fetch_exec () {
         if [[ "$docker_exec" == "[]" ]]; then
             docker_exec=$(docker "$object_type" inspect --format='{{.Config.Entrypoint}}' "$object")
         fi
-        exec=$(echo $docker_exec | sed -E 's/\[(.*)\]/\1/gm;t;d')
+        exec=$(echo $docker_exec | sed -E "s/\[(.*)\]/\1/gm;t;d")
         case $exec in
             /*)
                 normexec=$(echo "$exec" | sed 's/^\///')
@@ -163,8 +163,8 @@ eval set -- "$PARSED_ARGUMENTS"
 while :
 do 
     case $1 in
-        -h | --help)       usage;                  shift       ;;
-        --version)         version_then_exit;      shift       ;;
+        -h | --help)       usage;                  ;; # usage exits program no shift required
+        --version)         version_then_exit;      ;; # version_then_exit exits program no shift required
         -i | --from-image) IMAGE=1;                shift       ;;
         -x | --command)    COMMAND=$2;             shift 2     ;;
         -n | --name)       NAME=$2;                shift 2     ;;
