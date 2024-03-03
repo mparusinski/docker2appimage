@@ -98,7 +98,14 @@ fetch_exec () {
                 ;;
         esac
     else
-        normexec=$COMMAND
+        case $COMMAND in
+            /*)
+                normexec=$(echo "$COMMAND" | sed 's/^\///')
+                ;;
+            *)
+                normexec=$COMMAND
+                ;;
+        esac
     fi
 }
 
@@ -114,6 +121,9 @@ export PATH="${HERE}:${HERE}/usr/bin/:${HERE}/usr/sbin/:${HERE}/usr/games/:${HER
 export LD_LIBRARY_PATH="${HERE}/usr/lib/:${HERE}/usr/lib/i386-linux-gnu/:${HERE}/usr/lib/x86_64-linux-gnu/:${HERE}/usr/lib32/:${HERE}/usr/lib64/:${HERE}/lib/:${HERE}/lib/i386-linux-gnu/:${HERE}/lib/x86_64-linux-gnu/:${HERE}/lib32/:${HERE}/lib64/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${HERE}/usr/share/${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2 | cut -d " " -f 1)
+if printf "%s" "$EXEC" | grep -q '/'; then
+    EXEC="$HERE/$EXEC"
+fi
 exec "${EXEC}" "$@"
 EOF
     else
@@ -128,6 +138,9 @@ export PATH="${HERE}:${HERE}/usr/bin/:${HERE}/usr/sbin/:${HERE}/usr/games/:${HER
 export LD_LIBRARY_PATH="${HERE}/usr/lib/:${HERE}/usr/lib/i386-linux-gnu/:${HERE}/usr/lib/x86_64-linux-gnu/:${HERE}/usr/lib32/:${HERE}/usr/lib64/:${HERE}/lib/:${HERE}/lib/i386-linux-gnu/:${HERE}/lib/x86_64-linux-gnu/:${HERE}/lib32/:${HERE}/lib64/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${HERE}/usr/share/${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2 | cut -d " " -f 1)
+if printf "%s" "$EXEC" | grep -q '/'; then
+    EXEC="$HERE/$EXEC"
+fi
 exec "${EXEC}" "$@"
 set +x
 EOF
