@@ -83,7 +83,11 @@ fetch_exec () {
     object_type=$1  # Either image or container
     object=$2
     if [ -z ${COMMAND+x} ]; then
-        exec=$(docker "$object_type" inspect --format='{{.Config.Cmd}}' "$object" | sed -E 's/\[(.*)\]/\1/gm;t;d')
+        docker_exec=$(docker "$object_type" inspect --format='{{.Config.Cmd}}' "$object")
+        if [[ "$docker_exec" == "[]" ]]; then
+            docker_exec=$(docker "$object_type" inspect --format='{{.Config.Entrypoint}}' "$object")
+        fi
+        exec=$(echo $docker_exec | sed -E 's/\[(.*)\]/\1/gm;t;d')
         case $exec in
             /*)
                 normexec=$(echo "$exec" | sed 's/^\///')
